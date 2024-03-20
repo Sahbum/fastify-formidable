@@ -83,7 +83,7 @@ const plugin: FastifyPluginAsync<FastifyFormidableOptions> = async function (fas
     await fs.promises.mkdir((options.formidable as Options).uploadDir as string, { recursive: true })
   }
 
-  const formidable = buildIncomingForm(options.formidable)
+  const formidableOptions = (options.formidable as Options)
 
   fastify.decorateRequest(kIsMultipart, false)
   fastify.decorateRequest(kIsMultipartParsed, false)
@@ -93,8 +93,7 @@ const plugin: FastifyPluginAsync<FastifyFormidableOptions> = async function (fas
   fastify.decorateRequest('parseMultipart', async function (this: FastifyRequest, decoratorOptions?: Formidable | Options) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const request = this
-
-    const requestFormidable = buildIncomingForm(decoratorOptions ?? formidable)
+    const requestFormidable = buildIncomingForm(decoratorOptions ?? formidableOptions)
 
     const parser = buildRequestParser(requestFormidable)
     const { body, files } = await parser(request, { removeFilesFromBody: options.removeFilesFromBody })
@@ -111,7 +110,8 @@ const plugin: FastifyPluginAsync<FastifyFormidableOptions> = async function (fas
   if (options.addContentTypeParser === true) {
     fastify.addContentTypeParser('multipart', async function (request: FastifyRequest, _payload: any) {
       request[kIsMultipart] = true
-      const parse = buildRequestParser(formidable)
+      const requestFormidable = buildIncomingForm(formidableOptions)
+      const parse = buildRequestParser(requestFormidable)
       const { body, files } = await parse(request)
       request.files = files
       return body
@@ -127,7 +127,8 @@ const plugin: FastifyPluginAsync<FastifyFormidableOptions> = async function (fas
     fastify.addHook('preValidation', async function (request: FastifyRequest) {
       // skip if it is not multipart
       if (!request[kIsMultipart]) return
-      const parse = buildRequestParser(formidable)
+      const requestFormidable = buildIncomingForm(formidableOptions)
+      const parse = buildRequestParser(requestFormidable)
       const { body, files } = await parse(request)
       request.body = body
       request.files = files
