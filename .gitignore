@@ -117,9 +117,9 @@ dist
 .pnp.*
 
 # TypeScript Build
-*.js.map
-*.js
-*.d.ts
+# *.js.map
+# *.js
+# *.d.ts
 
 # Others
 pnpm-lock.yaml
